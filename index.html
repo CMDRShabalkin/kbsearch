@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>KB Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KB Search">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --text:#14181f; --muted:#5b6573; --line:#dde1e7;
+  --accent:#1d5fd0; --accent-text:#ffffff; --mark:#ffe58a; --mark-text:#1a1400; --ok:#1f8a4c; --warn:#b4540a;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0f1720; --panel:#17212d; --text:#e8edf3; --muted:#93a0b0; --line:#2a3646;
+    --accent:#5b9cff; --accent-text:#07111f; --mark:#6b5a0a; --mark-text:#fff4c2; --ok:#4cc27d; --warn:#f0a35a;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:17px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#app{max-width:980px;margin:0 auto;padding:0 16px 40px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.row{display:flex;gap:10px;align-items:center}
+h1{font-size:19px;margin:0;font-weight:650;letter-spacing:.2px;flex:1}
+.chip{font-size:13px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.ok{color:var(--ok);border-color:var(--ok)} .chip.warn{color:var(--warn);border-color:var(--warn)}
+button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 14px;min-height:44px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:600}
+button.ghost{background:transparent}
+button:disabled{opacity:.5}
+input[type=search],select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 14px;min-height:48px;width:100%}
+input[type=search]{font-size:18px}
+.searchrow{margin-top:10px}
+.meta{color:var(--muted);font-size:14px;margin:12px 2px 6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:10px 0}
+.card .top{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;font-size:14px;color:var(--muted)}
+.card .doc{color:var(--text);font-weight:650}
+.card .pg{font-variant-numeric:tabular-nums}
+.card .head{font-weight:600;margin:4px 0 2px}
+.card .snip{margin:2px 0;word-break:break-word}
+mark{background:var(--mark);color:var(--mark-text);border-radius:3px;padding:0 2px}
+.full{white-space:pre-wrap;word-break:break-word;margin:10px 0;padding:10px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--line);font-size:16px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:14px 0}
+.sheet h2{font-size:17px;margin:0 0 8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.recent{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.recent button{min-height:38px;padding:6px 12px;font-size:15px}
+.hidden{display:none!important}
+.scopebtn{width:100%;text-align:left;display:flex;justify-content:space-between;gap:8px}
+.scopebtn small{color:var(--muted)}
+.grp{margin:10px 0 2px;display:flex;align-items:center;gap:10px;font-weight:650}
+.chk{display:flex;align-items:flex-start;gap:12px;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.chk input{width:24px;height:24px;margin:1px 0 0;flex:none;accent-color:var(--accent)}
+.chk .nm{word-break:break-word}
+.chk .sub{display:block;color:var(--muted);font-size:13px}
+.badge{font-size:12px;padding:1px 8px;border-radius:99px;background:var(--accent);color:var(--accent-text);font-weight:600}
+.note{color:var(--muted);font-size:14px}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;width:0;background:var(--accent)}
+pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="row">
+      <h1>KB Search</h1>
+      <span id="net" class="chip">…</span>
+      <button id="btnLib" class="ghost" aria-label="Библиотека и настройки">☰</button>
+    </div>
+    <div id="searchBox" class="hidden">
+      <div class="searchrow"><input id="q" type="search" placeholder="Search in English, e.g. stabilized approach criteria"
+        enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="searchrow"><button id="btnScope" class="scopebtn" aria-label="Выбор документов">Документы</button></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="importBox" class="sheet hidden">
+      <h2>Загрузите базы знаний</h2>
+      <p class="note">Выберите один или несколько файлов <b>kb_*.sqlite</b>, подготовленных на компьютере (скрипт make_kb.py): по одному файлу на группу документов. Файлы сохранятся в памяти приложения, после этого поиск работает без интернета. Повторная загрузка файла той же группы заменяет её.</p>
+      <p><input id="file" type="file" multiple accept=".sqlite,.db,.sqlite3,application/octet-stream"></p>
+      <div class="bar hidden" id="impBar"><i></i></div>
+      <pre class="log" id="impLog"></pre>
+    </section>
+
+    <section id="scopeBox" class="sheet hidden">
+      <h2>В каких документах искать</h2>
+      <input id="scopeFilter" type="search" placeholder="Фильтр списка по названию" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="margin-bottom:8px">
+      <div class="tools" style="margin:0 0 6px"><button id="btnScopeAll">Выбрать все</button><button id="btnScopeNone">Снять все</button><button id="btnScopeDone" class="primary">Готово</button></div>
+      <div id="scopeList"></div>
+    </section>
+
+    <section id="libBox" class="sheet hidden">
+      <h2>Библиотека</h2>
+      <div id="libTable"></div>
+      <div class="tools"><button id="btnAdd">Добавить или обновить базы…</button></div>
+      <h2 style="margin-top:18px">Хранилище</h2>
+      <p class="note" id="stor">…</p>
+      <div class="tools">
+        <select id="stTarget" style="width:auto"><option value="256">тест 256 МБ</option><option value="1024" selected>тест 1 ГБ</option><option value="2048">тест 2 ГБ</option><option value="4096">тест 4 ГБ</option></select>
+        <button id="btnStorTest">Проверить, сколько можно записать</button>
+      </div>
+      <div class="bar hidden" id="stBar"><i></i></div>
+      <pre class="log" id="stLog"></pre>
+      <p class="note" id="ver"></p>
+    </section>
+
+    <div id="meta" class="meta"></div>
+    <div id="results"></div>
+    <div id="recent" class="recent"></div>
+    <div id="empty" class="empty hidden"></div>
+  </main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
