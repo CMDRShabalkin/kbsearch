@@ -66,7 +66,7 @@ export const STOP = new Set(
    "with at by if it its as from that this these those can could must should shall would will may might not no " +
    "than then there their them they which who whom whose why into onto over under about after before during " +
    "please tell me show give explain mean means long much many get make need needed right correct correctly properly " +
-   "action actions do done doing procedure procedures").split(" ")
+   "action actions do done doing procedure procedures plus minus").split(" ")
 );
 // "after"/"before" полезны в авиации (before takeoff), поэтому их оставляем.
 STOP.delete("after");
