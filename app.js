@@ -3,8 +3,9 @@ import { search, pageChunks, docList, metaOf, snippetHtml, highlightFull, tokeni
 import { initEmbedder, embed } from "./embed.js";
 import { hasSem, topPages } from "./sem.js";
 import { symbolsToWords, makeQueryExpander } from "./textnorm.js";
+import { setUserEquiv, equivExpand, EQUIV } from "./synonyms.js";
 
-const APP_VERSION = "1.3.3";
+const APP_VERSION = "1.3.4";
 const $ = (id) => document.getElementById(id);
 const IDB_NAME = "kbapp", IDB_STORE = "files", KEY_PREFIX = "kb:";
 
@@ -275,7 +276,7 @@ async function runSearch(save) {
     await semPromise;
     if (mySeq !== searchSeq) return;
     if (semState === "ready") {
-      try { qvec = await embed(makeQueryExpander(glossAll)(symbolsToWords(q))); } catch (e) { semState = "error"; semError = String(e && e.message || e); }
+      try { qvec = await embed(equivExpand(makeQueryExpander(glossAll)(symbolsToWords(q)))); } catch (e) { semState = "error"; semError = String(e && e.message || e); }
     }
     if (mySeq !== searchSeq) return;
   }
@@ -381,6 +382,11 @@ async function main() {
     await enterSearchMode(); show("libBox", true);
   });
   $("btnStorTest").onclick = storageTest;
+  $("btnSynSave").onclick = async () => {
+    const text = $("synText").value;
+    try { const n = setUserEquiv(text); await idbPut("synonyms", text); $("synInfo").textContent = ` Сохранено групп: ${n}. Встроенных: ${EQUIV.length}.`; runSearch(false); }
+    catch (e) { $("synInfo").textContent = " Ошибка: " + (e && e.message ? e.message : e); }
+  };
   $("file").onchange = (e) => { const fs = [...(e.target.files || [])]; if (fs.length) importFiles(fs); e.target.value = ""; };
   let timer = null;
   $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => runSearch(false), 250); });
@@ -393,6 +399,7 @@ async function main() {
 
   try {
     // совместимость с версией 1.0: ключ "kb" -> группа "docs"
+    try { const syn = await idbGet("synonyms"); if (typeof syn === "string") { $("synText").value = syn; setUserEquiv(syn); } } catch (e) {}
     const old = await idbGet("kb");
     if (old && old.blob) { await idbPut(KEY_PREFIX + "docs", old); await idbDel("kb"); }
     const keys = (await idbKeys()).filter((k) => typeof k === "string" && k.startsWith(KEY_PREFIX));

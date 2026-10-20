@@ -1,6 +1,6 @@
 // Ядро поиска: не зависит от браузера, работает поверх любой SQLite с FTS5.
 // db.all(sql, params) -> массив объектов.
-import { SYNONYMS, JOINERS, STOP } from "./synonyms.js";
+import { SYNONYMS, JOINERS, STOP, equivPhraseAlts } from "./synonyms.js";
 
 export function tokenize(q) {
   let s = q.toLowerCase();
@@ -47,8 +47,9 @@ export function glossaryAlts(toks, gloss) {
 }
 
 // Токен -> группа альтернатив: (token OR "alt phrase" OR ...)
-function group(t, extra) {
+function group(t, extra, on = true) {
   const alts = [qp(t)];
+  if (!on) return alts[0];
   for (const a of [...(SYNONYMS[t] || []), ...((extra && extra[t]) || [])]) {
     const cleaned = a.replace(/[^a-z0-9 \-\/]/gi, " ").replace(/[-\/]/g, " ").trim();
     if (cleaned) alts.push(qp(cleaned));
@@ -57,8 +58,9 @@ function group(t, extra) {
 }
 
 // Альтернативы токена: сам токен + синонимы, очищенные до одного слова/фразы
-function alts(t, extra) {
+function alts(t, extra, on = true) {
   const out = [t];
+  if (!on) return out;
   for (const a of [...(SYNONYMS[t] || []), ...((extra && extra[t]) || [])]) {
     const c = a.replace(/[^a-z0-9 \-\/]/gi, " ").replace(/[-\/]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
     if (c && !out.includes(c)) out.push(c);
@@ -67,11 +69,11 @@ function alts(t, extra) {
 }
 
 // Соседние пары слов как фразы (с синонимами): "cab alt", "cabin altitude" ...
-function bigramMatch(toks, extra) {
+function bigramMatch(toks, extra, on = true) {
   const phrases = [];
   for (let i = 0; i + 1 < toks.length; i++) {
-    for (const a of alts(toks[i], extra).slice(0, 4)) {
-      for (const b of alts(toks[i + 1], extra).slice(0, 4)) phrases.push(qp(a + " " + b));
+    for (const a of alts(toks[i], extra, on).slice(0, 4)) {
+      for (const b of alts(toks[i + 1], extra, on).slice(0, 4)) phrases.push(qp(a + " " + b));
     }
   }
   return phrases.length ? phrases.join(" OR ") : null;
@@ -81,19 +83,29 @@ export function buildQueries(q, gloss) {
   const toks = tokenize(q);
   if (!toks.length) return { toks, tiers: [] };
   const extra = glossaryAlts(toks, gloss);
-  const groups = toks.map((t) => group(t, extra));
-  const tiers = [];
-  if (toks.length >= 2) tiers.push({ name: "phrase", match: qp(toks.join(" ")) });
-  const bg = toks.length >= 2 ? bigramMatch(toks, extra) : null;
-  if (bg) tiers.push({ name: "pair", match: bg });
-  if (toks.length >= 2) tiers.push({ name: "all", match: groups.join(" AND ") });
-  tiers.push({ name: "any", match: groups.join(" OR ") });
+  for (const [w, al] of Object.entries(equivPhraseAlts(toks))) { extra[w] = extra[w] || []; for (const a of al) if (!extra[w].includes(a)) extra[w].push(a); }
+  const mk = (on, sfx) => {
+    const tiers = [];
+    const groups = toks.map((t) => group(t, extra, on));
+    if (toks.length >= 2 && !on) tiers.push({ name: "phrase", match: qp(toks.join(" ")) });
+    const bg = toks.length >= 2 ? bigramMatch(toks, extra, on) : null;
+    if (bg) tiers.push({ name: "pair" + sfx, match: bg });
+    if (toks.length >= 2) tiers.push({ name: "all" + sfx, match: groups.join(" AND ") });
+    tiers.push({ name: "any" + sfx, match: groups.join(" OR ") });
+    return tiers;
+  };
+  // Точные слова - основной уровень; синонимы и расшифровки - отдельные уровни с меньшим весом,
+  // чтобы они не вытесняли страницы с точным совпадением.
+  const base = mk(false, "");
+  const withSyn = mk(true, "+");
+  const baseMatches = new Set(base.map((t) => t.match));
+  const tiers = base.concat(withSyn.filter((t) => !baseMatches.has(t.match)));
   return { toks, tiers, extra };
 }
 
 const HL_A = "\u0001", HL_B = "\u0002";
 
-const TIER_WEIGHT = { phrase: 3.0, all: 2.0, pair: 2.0, any: 1.0 };
+const TIER_WEIGHT = { phrase: 3.0, all: 2.0, pair: 2.0, any: 1.0, "all+": 1.2, "pair+": 1.2, "any+": 0.6 };
 
 const SEM_WEIGHT = 3;
 

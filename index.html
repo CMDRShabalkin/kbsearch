@@ -106,6 +106,10 @@ pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
       <h2>Библиотека</h2>
       <div id="libTable"></div>
       <div class="tools"><button id="btnAdd">Добавить или обновить базы…</button></div>
+      <h2 style="margin-top:18px">Словарь синонимов</h2>
+      <p class="note">Слова, которые в ваших документах означают одно и то же. Одна группа на строку, слова через «=». Пример: <code>captain = pic = pilot in command</code>. Работает сразу, без интернета; строки с # игнорируются.</p>
+      <textarea id="synText" rows="6" style="width:100%;font:14px/1.4 ui-monospace,Menlo,monospace" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="captain = pic = pilot in command"></textarea>
+      <div class="tools"><button id="btnSynSave">Сохранить словарь</button><span class="note" id="synInfo"></span></div>
       <h2 style="margin-top:18px">Хранилище</h2>
       <p class="note" id="stor">…</p>
       <div class="tools">
