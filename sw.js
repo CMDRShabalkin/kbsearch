@@ -1,12 +1,12 @@
 // Service worker: кэширует оболочку приложения, чтобы оно открывалось без интернета.
 // При изменении любого файла приложения увеличьте номер версии.
-const VERSION = "kbsearch-v1.3.4";
+const VERSION = "kbsearch-v1.4.1";
 const SHELL = [
-  "./", "index.html", "app.js", "search.js", "synonyms.js", "embed.js", "sem.js", "textnorm.js", "manifest.webmanifest",
+  "./", "index.html", "app.js", "search.js", "synonyms.js", "embed.js", "sem.js", "textnorm.js", "answer.js", "manifest.webmanifest",
   "icon-180.png", "icon-192.png", "icon-512.png",
   "vendor/sqlite3.mjs", "vendor/sqlite3.wasm",
   "vendor/ort/ort.wasm.min.mjs", "vendor/ort/ort-wasm-simd-threaded.mjs", "vendor/ort/ort-wasm-simd-threaded.wasm",
-  "model/vocab.json", "model/minilm-int8.onnx",
+  "model/vocab.json", "model/bge-small-q8.onnx.part1", "model/bge-small-q8.onnx.part2", "model/bge-small-q8.onnx.part3", "model/bge-small-q8.onnx.part4", "model/bge-small-q8.onnx.part5", "model/marco-l6-q8.onnx.part1", "model/marco-l6-q8.onnx.part2", "model/marco-l6-q8.onnx.part3",
 ];
 
 self.addEventListener("install", (e) => {

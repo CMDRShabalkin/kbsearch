@@ -92,6 +92,9 @@ export function buildQueries(q, gloss) {
     if (bg) tiers.push({ name: "pair" + sfx, match: bg });
     if (toks.length >= 2) tiers.push({ name: "all" + sfx, match: groups.join(" AND ") });
     tiers.push({ name: "any" + sfx, match: groups.join(" OR ") });
+    // Совпадение в заголовке раздела: все слова вопроса в названии раздела ("Stabilized approach criteria")
+    if (toks.length >= 2) tiers.push({ name: "head" + sfx, match: "heading : (" + groups.join(" AND ") + ")" });
+    else tiers.push({ name: "head" + sfx, match: "heading : " + groups[0] });
     return tiers;
   };
   // Точные слова - основной уровень; синонимы и расшифровки - отдельные уровни с меньшим весом,
@@ -105,7 +108,7 @@ export function buildQueries(q, gloss) {
 
 const HL_A = "\u0001", HL_B = "\u0002";
 
-const TIER_WEIGHT = { phrase: 3.0, all: 2.0, pair: 2.0, any: 1.0, "all+": 1.2, "pair+": 1.2, "any+": 0.6 };
+const TIER_WEIGHT = { phrase: 3.0, all: 2.0, pair: 2.0, any: 1.0, head: 2.0, "all+": 1.2, "pair+": 1.2, "any+": 0.6, "head+": 1.0 };
 
 const SEM_WEIGHT = 3;
 

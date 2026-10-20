@@ -68,6 +68,23 @@ td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertic
 .note{color:var(--muted);font-size:14px}
 .bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0}
 .bar>i{display:block;height:100%;width:0;background:var(--accent)}
+/* уверенность и три блока ответа */
+.conf{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:2px 10px;border-radius:99px;border:1px solid var(--line)}
+.conf i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.conf.green{color:var(--ok);border-color:var(--ok)} .conf.green i{background:var(--ok)}
+.conf.yellow{color:#b58105;border-color:#d9a400} .conf.yellow i{background:#e5b400}
+.conf.red{color:#c53030;border-color:#c53030} .conf.red i{background:#d64545}
+@media (prefers-color-scheme: dark){.conf.yellow{color:#f0c040;border-color:#c99a00}.conf.red{color:#ff8080;border-color:#d64545}}
+.card.green{border-left:6px solid var(--ok)} .card.yellow{border-left:6px solid #e5b400} .card.red{border-left:6px solid #d64545}
+.blk{margin:10px 0 0;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.blk .lbl{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:3px}
+.blk.ans{background:var(--panel);border-color:var(--accent);border-width:2px}
+.blk.ans .txt{font-size:18px;font-weight:600}
+.blk.src .txt{font-size:15px}
+.blk.quo .txt{white-space:pre-wrap;word-break:break-word;font-size:16px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 2px 4px}
+.legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.iconbtn{min-width:48px;padding:9px 10px;font-size:20px;line-height:1}
 pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
 </style>
 </head>
@@ -77,7 +94,8 @@ pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
     <div class="row">
       <h1>KB Search</h1>
       <span id="net" class="chip">…</span>
-      <button id="btnLib" class="ghost" aria-label="Библиотека и настройки">☰</button>
+      <button id="btnDict" class="ghost iconbtn" aria-label="Словарь синонимов">📖</button>
+      <button id="btnLib" class="ghost iconbtn" aria-label="Библиотека и настройки">☰</button>
     </div>
     <div id="searchBox" class="hidden">
       <div class="searchrow"><input id="q" type="search" placeholder="Search in English, e.g. stabilized approach criteria"
@@ -102,14 +120,20 @@ pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
       <div id="scopeList"></div>
     </section>
 
+    <section id="dictBox" class="sheet hidden">
+      <h2>Словарь синонимов</h2>
+      <p class="note">Слова, которые в ваших документах означают одно и то же. Одна группа на строку, слова через «=». Пример: <code>captain = pic = pilot in command</code>. Работает сразу, без интернета; строки с # игнорируются.</p>
+      <textarea id="synText" rows="9" style="width:100%;font:14px/1.4 ui-monospace,Menlo,monospace" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="captain = pic = pilot in command"></textarea>
+      <div class="tools"><button id="btnSynSave" class="primary">Сохранить словарь</button><button id="btnDictClose" class="ghost">Закрыть</button><span class="note" id="synInfo"></span></div>
+      <h2 style="margin-top:18px">Встроенные группы</h2>
+      <p class="note">Уже работают, менять не нужно. Свои строки добавляются к ним.</p>
+      <div id="synBuiltin" class="note" style="line-height:1.7"></div>
+    </section>
+
     <section id="libBox" class="sheet hidden">
       <h2>Библиотека</h2>
       <div id="libTable"></div>
       <div class="tools"><button id="btnAdd">Добавить или обновить базы…</button></div>
-      <h2 style="margin-top:18px">Словарь синонимов</h2>
-      <p class="note">Слова, которые в ваших документах означают одно и то же. Одна группа на строку, слова через «=». Пример: <code>captain = pic = pilot in command</code>. Работает сразу, без интернета; строки с # игнорируются.</p>
-      <textarea id="synText" rows="6" style="width:100%;font:14px/1.4 ui-monospace,Menlo,monospace" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="captain = pic = pilot in command"></textarea>
-      <div class="tools"><button id="btnSynSave">Сохранить словарь</button><span class="note" id="synInfo"></span></div>
       <h2 style="margin-top:18px">Хранилище</h2>
       <p class="note" id="stor">…</p>
       <div class="tools">
@@ -122,6 +146,7 @@ pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
     </section>
 
     <div id="meta" class="meta"></div>
+    <div id="legend" class="legend hidden"><span><i style="background:var(--ok)"></i>уверенный</span><span><i style="background:#e5b400"></i>умеренный</span><span><i style="background:#d64545"></i>слабый</span></div>
     <div id="results"></div>
     <div id="recent" class="recent"></div>
     <div id="empty" class="empty hidden"></div>
