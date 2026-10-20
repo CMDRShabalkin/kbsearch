@@ -6,7 +6,7 @@ import { symbolsToWords, makeQueryExpander } from "./textnorm.js";
 import { setUserEquiv, equivExpand, EQUIV } from "./synonyms.js";
 import { candidateText, splitUnits, lexicalScore, stemsOf, parseHeading, confLevel } from "./answer.js";
 
-const APP_VERSION = "1.4.1";
+const APP_VERSION = "1.4.2";
 const EMB_MODEL = "bge-small-en-v1.5-q8"; // под эту модель посчитаны векторы в базе
 const $ = (id) => document.getElementById(id);
 const IDB_NAME = "kbapp", IDB_STORE = "files", KEY_PREFIX = "kb:";
@@ -476,8 +476,12 @@ async function main() {
   };
   $("file").onchange = (e) => { const fs = [...(e.target.files || [])]; if (fs.length) importFiles(fs); e.target.value = ""; };
   let timer = null;
-  $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => runSearch(false), 250); });
+  // Поиск запускается только по Enter/«Найти»: тяжёлый поиск во время набора подвешивал клавиатуру
+  const syncClear = () => $("qClear").classList.toggle("hidden", !$("q").value);
+  $("q").addEventListener("input", () => { syncClear(); if (!$("q").value.trim()) { clearTimeout(timer); timer = setTimeout(() => runSearch(false), 50); } });
   $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(timer); runSearch(true); $("q").blur(); } });
+  $("qClear").addEventListener("click", () => { $("q").value = ""; syncClear(); runSearch(false); $("q").focus(); });
+  syncClear();
   $("btnScope").onclick = () => { const on = $("scopeBox").classList.contains("hidden"); show("scopeBox", on); if (on) { show("libBox", false); $("scopeFilter").value = ""; renderScope(); window.scrollTo({ top: 0 }); } };
   $("btnScopeDone").onclick = () => { show("scopeBox", false); runSearch(false); };
   $("btnScopeAll").onclick = () => { for (const g of dbs) for (const d of g.docs) selected.add(key(g, d)); renderScope(); updateScopeButton(); };

@@ -39,6 +39,9 @@ button:disabled{opacity:.5}
 input[type=search],select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 14px;min-height:48px;width:100%}
 input[type=search]{font-size:18px}
 .searchrow{margin-top:10px}
+.qwrap{position:relative}.qwrap #q{padding-right:52px}
+.qclear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:none;border-radius:20px;background:transparent;color:var(--muted,#8b949e);font-size:20px;line-height:40px;padding:0;cursor:pointer}
+.qclear:active{background:rgba(255,255,255,.08)}
 .meta{color:var(--muted);font-size:14px;margin:12px 2px 6px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:10px 0}
 .card .top{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;font-size:14px;color:var(--muted)}
@@ -98,8 +101,8 @@ pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
       <button id="btnLib" class="ghost iconbtn" aria-label="Библиотека и настройки">☰</button>
     </div>
     <div id="searchBox" class="hidden">
-      <div class="searchrow"><input id="q" type="search" placeholder="Search in English, e.g. stabilized approach criteria"
-        enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="searchrow qwrap"><input id="q" type="text" placeholder="Search in English, e.g. stabilized approach criteria"
+        enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button id="qClear" class="qclear hidden" aria-label="Стереть вопрос" type="button">✕</button></div>
       <div class="searchrow"><button id="btnScope" class="scopebtn" aria-label="Выбор документов">Документы</button></div>
     </div>
   </header>
