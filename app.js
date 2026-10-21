@@ -6,7 +6,7 @@ import { symbolsToWords, makeQueryExpander } from "./textnorm.js";
 import { setUserEquiv, equivExpand, EQUIV } from "./synonyms.js";
 import { candidateText, splitUnits, lexicalScore, stemsOf, parseHeading, confLevel } from "./answer.js";
 
-const APP_VERSION = "1.4.2";
+const APP_VERSION = "1.4.3";
 const EMB_MODEL = "bge-small-en-v1.5-q8"; // под эту модель посчитаны векторы в базе
 const $ = (id) => document.getElementById(id);
 const IDB_NAME = "kbapp", IDB_STORE = "files", KEY_PREFIX = "kb:";
@@ -449,11 +449,37 @@ async function storageTest() {
   btn.disabled = false; renderStorage();
 }
 
+// ---------- Обновление приложения (сообщения от sw.js) ----------
+function showUpdate(m) {
+  const first = !navigator.serviceWorker.controller; // первая установка: перезапуск не нужен
+  if (m.type === "sw-progress") {
+    show("updBox", true); show("btnUpdReload", false); show("updBar", true);
+    $("updText").textContent = (first ? "Загрузка приложения для работы без интернета" : `Загрузка обновления ${m.version}`) +
+      `: ${m.done} из ${m.total} файлов, ${m.mb} МБ. Не закрывайте приложение.`;
+    $("updBar").firstElementChild.style.width = Math.round(100 * m.done / m.total) + "%";
+  } else if (m.type === "sw-ready") {
+    if (m.version === APP_VERSION) { show("updBox", false); return; }
+    show("updBox", true); show("updBar", false);
+    if (first) {
+      $("updText").textContent = "Приложение готово к работе без интернета.";
+      setTimeout(() => show("updBox", false), 4000);
+    } else {
+      $("updText").textContent = `Обновление ${m.version} загружено.`;
+      show("btnUpdReload", true);
+    }
+  } else if (m.type === "sw-error") {
+    show("updBox", true); show("updBar", false); show("btnUpdReload", false);
+    $("updText").textContent = "Обновление не загрузилось (нет интернета?). Работает прежняя версия; попытка будет при следующем запуске.";
+  }
+}
+
 // ---------- Init ----------
 async function main() {
+  $("btnUpdReload").onclick = () => location.reload();
   updateNet();
   if ("serviceWorker" in navigator) {
-    try { await navigator.serviceWorker.register("sw.js"); } catch (e) { console.warn("SW", e); }
+    navigator.serviceWorker.addEventListener("message", (e) => showUpdate(e.data || {}));
+    try { const reg = await navigator.serviceWorker.register("sw.js"); reg.update().catch(() => {}); } catch (e) { console.warn("SW", e); }
   }
   $("btnLib").onclick = async () => { const on = $("libBox").classList.contains("hidden"); show("libBox", on); if (on) { show("scopeBox", false); show("dictBox", false); await renderLibrary(); renderStorage(); } };
   $("btnDict").onclick = () => { const on = $("dictBox").classList.contains("hidden"); show("dictBox", on); if (on) { show("scopeBox", false); show("libBox", false); renderBuiltinSyn(); window.scrollTo({ top: 0 }); } };

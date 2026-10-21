@@ -89,6 +89,8 @@ td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertic
 .legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 .iconbtn{min-width:48px;padding:9px 10px;font-size:20px;line-height:1}
 pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
+.upd{margin-top:10px;padding:8px 12px;border:1px solid var(--accent);border-radius:12px;background:var(--panel)}
+.upd .bar{margin:6px 0 2px}
 </style>
 </head>
 <body>
@@ -99,6 +101,10 @@ pre.log{white-space:pre-wrap;font-size:13px;color:var(--muted);margin:8px 0 0}
       <span id="net" class="chip">…</span>
       <button id="btnDict" class="ghost iconbtn" aria-label="Словарь синонимов">📖</button>
       <button id="btnLib" class="ghost iconbtn" aria-label="Библиотека и настройки">☰</button>
+    </div>
+    <div id="updBox" class="upd hidden">
+      <div class="row"><span id="updText" class="note" style="flex:1"></span><button id="btnUpdReload" class="primary hidden">Перезапустить</button></div>
+      <div class="bar" id="updBar"><i></i></div>
     </div>
     <div id="searchBox" class="hidden">
       <div class="searchrow qwrap"><input id="q" type="text" placeholder="Search in English, e.g. stabilized approach criteria"
