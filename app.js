@@ -6,7 +6,7 @@ import { symbolsToWords, makeQueryExpander } from "./textnorm.js";
 import { setUserEquiv, equivExpand, EQUIV } from "./synonyms.js";
 import { candidateText, splitUnits, lexicalScore, stemsOf, parseHeading, confLevel } from "./answer.js";
 
-const APP_VERSION = "1.4.3";
+const APP_VERSION = "1.4.4";
 const EMB_MODEL = "bge-small-en-v1.5-q8"; // под эту модель посчитаны векторы в базе
 const $ = (id) => document.getElementById(id);
 const IDB_NAME = "kbapp", IDB_STORE = "files", KEY_PREFIX = "kb:";
