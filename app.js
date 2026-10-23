@@ -6,7 +6,7 @@ import { symbolsToWords, makeQueryExpander } from "./textnorm.js";
 import { setUserEquiv, equivExpand, EQUIV } from "./synonyms.js";
 import { candidateText, splitUnits, lexicalScore, stemsOf, parseHeading, confLevel } from "./answer.js";
 
-const APP_VERSION = "1.4.4";
+const APP_VERSION = "1.4.5";
 const EMB_MODEL = "bge-small-en-v1.5-q8"; // под эту модель посчитаны векторы в базе
 const $ = (id) => document.getElementById(id);
 const IDB_NAME = "kbapp", IDB_STORE = "files", KEY_PREFIX = "kb:";
@@ -118,10 +118,38 @@ window.__setScope = (subs, prefixes) => {
   updateScopeButton();
 };
 
+// Короткое имя для кнопки выбора: OMA_Iss05Rev14_... -> OMA, A330_MEL_... -> MEL, eawm_pacific -> Jep Pacific
+function shortDoc(name) {
+  const rules = [[/^A330_MEL/i, "MEL"], [/Datalink/i, "Datalink"], [/^ICAO_Doc_(\d+)/i, "Doc $1"], [/^Grooming/i, "Grooming"],
+                 [/^eawm_(.+)/i, (m, r) => "Jep " + r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())]];
+  for (const [rx, rep] of rules) if (rx.test(name)) return name.match(rx)[0].replace(rx, rep);
+  return name.split(/[_\-\s]/)[0];
+}
+
 function updateScopeButton() {
   const total = totalDocs(), n = selected.size;
   const btn = $("btnScope");
-  btn.innerHTML = `<span>Документы</span><small>${n === total ? "все (" + total + ")" : n + " из " + total}</small>`;
+  let label;
+  if (n === 0) label = "Документы не выбраны";
+  else if (n === total) label = "Все документы";
+  else {
+    // подгруппа, выбранная целиком (из 3+ документов), показывается одним словом: «Jeppesen»
+    const names = [];
+    for (const g of dbs) {
+      const bySub = new Map();
+      for (const d of g.docs) { const s = d.sub || ""; if (!bySub.has(s)) bySub.set(s, []); bySub.get(s).push(d); }
+      for (const [s, docs] of bySub) {
+        const sel = docs.filter((d) => selected.has(key(g, d)));
+        if (s && sel.length === docs.length && docs.length >= 3) names.push(s);
+        else for (const d of sel) { const sn = shortDoc(d.doc); if (!names.includes(sn)) names.push(sn); }
+      }
+    }
+    const ORDER = ["OMA", "OMB", "OMC", "FCOM", "MEL", "EDTO", "SUP"]; // основные — первыми, остальные в прежнем порядке
+    const rank = (x) => (ORDER.includes(x) ? ORDER.indexOf(x) : ORDER.length);
+    names.sort((x, y) => rank(x) - rank(y));
+    label = names.length > 6 ? names.slice(0, 5).join(", ") + ` и ещё ${names.length - 5}` : names.join(", ");
+  }
+  btn.innerHTML = `<span class="scopenames">${escapeHtml(label)}</span><small>${n === total ? "все (" + total + ")" : n + " из " + total}</small>`;
 }
 
 function renderScope() {

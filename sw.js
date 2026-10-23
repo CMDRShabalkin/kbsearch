@@ -1,6 +1,6 @@
 // Service worker: кэширует оболочку приложения, чтобы оно открывалось без интернета.
 // При изменении любого файла приложения увеличьте номер версии.
-const VERSION = "kbsearch-v1.4.4";
+const VERSION = "kbsearch-v1.4.5";
 const SHELL = [
   "./", "index.html", "app.js", "search.js", "synonyms.js", "embed.js", "sem.js", "textnorm.js", "answer.js", "manifest.webmanifest",
   "icon-180.png", "icon-192.png", "icon-512.png",
